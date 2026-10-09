@@ -45,6 +45,28 @@ registro histórico y fuente de las lecciones de la v1 (§14 resume las que se h
 | Datos de la v1 | **No se migran.** La v2 arranca limpia. |
 | Diseño visual | Se conserva la identidad de `arcade.css` (colores, tipografía, tono), llevada a tokens. Minimalista: cada pantalla responde una pregunta. |
 
+### 1.1b Ajustes confirmados con la docente (9/10) — **prevalecen sobre el resto del documento**
+
+Donde una sección posterior diga otra cosa, manda esta tabla. Las secciones afectadas llevan la marca *(ver §1.1b)*.
+
+| # | Área | Decisión |
+|---|---|---|
+| A1 | **Alta de docentes** | **Autorregistro con código de invitación.** El administrador genera un código de un solo uso (token aleatorio, caduca, se guarda solo su hash). El docente se registra con ese código; al usarlo queda consumido. Contraseña de docente: mínimo 12 (§4.6). |
+| A2 | **Alta de estudiantes** | Autorregistro con **código de estudiante, nombre, número de identificación (cédula), correo**. El código de estudiante y la cédula se escriben **dos veces, sin pegar**. Ambos son únicos. |
+| A3 | **Recuperar la cuenta** | Vía principal: **correo con un código** de restablecimiento enviado con **Resend** (`RESEND_API_KEY`). Vías secundarias: **cédula + código de estudiante** (activable/desactivable por configuración) y **código de un solo uso generado por la docente**. Sustituye a la vía «enlace por SMTP». |
+| A4 | **Administrador** | Ve **todos los cursos, bancos de preguntas y evaluaciones** de todos los docentes (lectura y gestión). **No ve información de estudiantes ni notas**: ni listas, ni intentos, ni respuestas, ni resultados, ni eventos de integridad. Sustituye a «el administrador no es un superdocente» (§4.1). |
+| A5 | **Cursos** | **El docente crea sus cursos** y dentro de ellos los grupos, y gestiona todo lo demás del curso. El administrador ya no crea cursos ni asigna titulares. |
+| A6 | **Retiro** | Solo el docente retira estudiantes de su curso. El estudiante no puede salirse por su cuenta. |
+| A7 | **Bancos** | Son **del docente** y los usa en todos sus cursos y periodos. No son del administrador ni de un curso. |
+| A8 | **Corregir la respuesta correcta** | Editar una pregunta solo afecta a evaluaciones futuras (lo presentado queda congelado), **excepto** si se corrige la **respuesta correcta**: se trata como corrección de un error y se aplica a las evaluaciones en curso, recalculando los intentos afectados con su registro en `grade_revisions`. |
+| A9 | **Reglas de selección** | Una regla puede filtrar por **varios temas** (casillas) y **una o más dificultades** a la vez, además de «todos». Ver §7.0. |
+| A10 | **Pareja** | Se elige en la creación si la evaluación es individual o en pareja. En pareja, se escoge el compañero de una **lista desplegable con los estudiantes matriculados en el curso**. Solo queda activo el perfil de quien inicia; **el perfil del compañero queda inactivo mientras dura la presentación**. La evaluación, la nota y la retroalimentación quedan en el perfil de los dos. |
+| A11 | **Presencialidad** | Si la evaluación es presencial y el estudiante no está presente en la asistencia de la clase, su perfil queda inhabilitado para presentarla. Las evaluaciones en casa no lo exigen. |
+| A12 | **Presentación del examen** | Se porta **el motor de la v1** (`quiz_app/public/js/pages/quiz.js` y `attempt.service.js`), que ya funciona bien en producción: antitrampas (incluida la congelación por pantalla dividida y la pantalla compartida), vidas, latido con secuencia, retroalimentación y vista de resultados. |
+| A13 | **Reporte de notas del estudiante** | Además de su nota, el estudiante ve el **desglose** de cada evaluación y un **reporte de notas** del curso. |
+| A14 | **Bonificación** | Se configura al crear la evaluación (§7.3, sin cambios). |
+| A15 | **Ampliar tiempo** | Lo tienen **todos los docentes** sobre las evaluaciones que están en curso en sus cursos. |
+
 ### 1.2 No adoptadas (y su riesgo, para que quede escrito)
 
 | Recomendación | Riesgo que queda abierto |
@@ -207,13 +229,13 @@ Todos los manejadores son **idempotentes**: si se ejecutan dos veces, el resulta
 
 | Rol | Cómo se obtiene | Qué hace |
 |---|---|---|
-| **Estudiante** | Se registra solo con correo institucional | Ve los cursos y evaluaciones de los grupos en que está matriculado |
-| **Docente** | Lo crea un administrador (no hay autorregistro docente) | Ve y gestiona **solo** los cursos que dicta |
+| **Estudiante** | Se registra solo *(ver §1.1b A2)* | Ve los cursos y evaluaciones de los grupos en que está matriculado |
+| **Docente** | Se autorregistra con un código de invitación del administrador *(ver §1.1b A1)* | Crea y gestiona sus cursos *(A5)* |
 | **Administrador** | Marca `is_admin` sobre una cuenta docente | Gestiona usuarios, materias y periodos; asigna docentes a cursos; ve la auditoría |
 
-**El administrador no es un superdocente.** No ve ni edita notas ni evaluaciones de cursos que no dicta. Si necesita entrar a un curso para dar soporte, se asigna como docente auxiliar y queda en la auditoría. Un rol con acceso invisible a todo es exactamente lo que no debe existir.
+*(Reemplazado por §1.1b A4.)* **El administrador no es un superdocente.** No ve ni edita notas ni evaluaciones de cursos que no dicta. Si necesita entrar a un curso para dar soporte, se asigna como docente auxiliar y queda en la auditoría. Un rol con acceso invisible a todo es exactamente lo que no debe existir.
 
-**Única excepción operativa: ampliar tiempo** (§7.2). El administrador ve la lista de evaluaciones **abiertas en este momento** (curso, título, intentos en curso, hora de cierre) y puede sumarles tiempo. No ve preguntas, respuestas, eventos ni notas. Exige reautenticación y motivo, queda en la auditoría, y la docente del curso lo ve en su Inicio. La excepción existe porque una caída del servidor en mitad de un parcial es urgente y la docente puede estar sin acceso al panel.
+*(Revisar contra §1.1b A4 y A15.)* **Única excepción operativa: ampliar tiempo** (§7.2). El administrador ve la lista de evaluaciones **abiertas en este momento** (curso, título, intentos en curso, hora de cierre) y puede sumarles tiempo. No ve preguntas, respuestas, eventos ni notas. Exige reautenticación y motivo, queda en la auditoría, y la docente del curso lo ve en su Inicio. La excepción existe porque una caída del servidor en mitad de un parcial es urgente y la docente puede estar sin acceso al panel.
 
 ### 4.2 Sesiones
 
@@ -357,7 +379,7 @@ La misma tabla limita los restablecimientos (§4.7).
 
 | Vía | Requiere | Siempre disponible |
 |---|---|---|
-| **Correo institucional + código de estudiante** | `student_code` cargado | Sí |
+| *(Reemplazado por §1.1b A3.)* **Correo institucional + código de estudiante** | `student_code` cargado | Sí |
 | **Código de un solo uso generado por la docente** | Que la docente lo entregue | Sí |
 | **Enlace al correo** | `SMTP_HOST` configurado | **Se oculta sola si no hay SMTP** |
 
@@ -502,6 +524,7 @@ CREATE TABLE users (
   role                   TEXT   NOT NULL CHECK (role IN ('student','teacher')),
   is_admin               BOOLEAN NOT NULL DEFAULT FALSE,
   student_code           TEXT,                -- solo dígitos
+  national_id            TEXT,                -- cédula; única; con student_code sirve para recuperar (§1.1b A2, A3)
   student_code_verified  BOOLEAN NOT NULL DEFAULT FALSE,  -- TRUE si vino de la lista oficial
   password_hash          TEXT NOT NULL,
   password_changed_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -575,9 +598,9 @@ CREATE TABLE enrollments (
 2. **Lista oficial** importada por la docente. Previsualización obligatoria, los cruces ambiguos se reportan y no se resuelven solos, y fija `student_code_verified = TRUE`.
 3. **Manual**, desde la ficha del grupo.
 
-**Quién crea qué:**
-- El administrador crea materias, periodos y docentes, y asigna el docente titular de un curso.
-- El docente titular crea grupos, invita auxiliares y gestiona todo lo demás de su curso.
+**Quién crea qué:** *(ver §1.1b A1 y A5)*
+- El administrador genera los códigos de invitación de docentes.
+- El docente crea sus cursos y sus grupos, y gestiona todo lo demás del curso.
 
 ### 6.3 Temas, bancos y preguntas
 
@@ -775,6 +798,47 @@ Las tablas de gamificación, ayudas entre compañeros y calificación por fotos 
 
 ## 7. Evaluaciones: ciclo de vida y variantes
 
+### 7.0 Selección de preguntas: reglas *(9/10, §1.1b A9)*
+
+**Lo que hace la v1** (`quiz_app/src/schemas/assessment.schema.js`, `public/js/pages/teacher-assessment.js`): cada regla es `{banco, tema | todos, dificultad | cualquiera, cantidad}`. Hay además un generador que crea de una vez una regla por cada tema marcado y por cada dificultad («2 difíciles + 2 medias + 1 fácil por tema»). Su límite: no permite «10 preguntas al azar entre *estos tres temas*, *medias o difíciles*» sin partirlo a mano.
+
+**Regla de la v2** — un solo modelo que cubre todas las combinaciones:
+
+```ts
+// packages/contracts/assessmentRules.ts
+rule = z.object({
+  bankIds:      z.array(uuid).min(1),                 // uno o varios bancos del docente
+  topicIds:     z.array(uuid).default([]),            // vacío = todos los temas
+  difficulties: z.array(z.enum(["facil","medio","dificil"])).default([]),  // vacío = todas
+  count:        z.number().int().min(1).max(100),
+  spread:       z.enum(["random","even"]).default("random"),  // even = repartir parejo entre los temas marcados
+  points:       z.number().positive().default(1),
+})
+```
+
+| Lo que quiere la docente | Cómo queda |
+|---|---|
+| 10 al azar de todo el banco | `topicIds: []`, `difficulties: []`, `count: 10` |
+| 8 difíciles de cualquier tema | `difficulties: ["dificil"]`, `count: 8` |
+| 10 de Límites y Continuidad, medias o difíciles | `topicIds: [L, C]`, `difficulties: ["medio","dificil"]`, `count: 10` |
+| Igual, pero 5 y 5 | lo mismo con `spread: "even"` |
+| 2 fáciles + 2 medias + 1 difícil **por cada** tema | Botón **«Una regla por tema»** (el generador de la v1): crea una regla por tema y dificultad |
+
+**Pantalla (paso *Qué evalúa*):**
+1. Bancos (casillas, preselecciona el último usado).
+2. **Tabla temas × dificultad** con la cantidad **disponible** en cada celda. Se marcan temas (filas) y dificultades (columnas) con casillas; *Todos / Ninguno* en cada eje.
+3. Cantidad y reparto (*al azar* / *parejo por tema*) → **Añadir regla**.
+4. Debajo, la lista de reglas, cada una con su resumen en una línea («10 · Límites, Continuidad · medias o difíciles · al azar») y su **disponibilidad real**.
+5. Acceso a **Una regla por tema** y a **Preguntas fijas** (elegir preguntas una por una).
+
+**Resolución sin repetir y sin falsos «insuficiente».** Cuando las reglas se solapan (p. ej. «3 de Límites» y «2 difíciles»), una pregunta difícil de Límites sirve a las dos, pero solo puede usarse una vez. Repartir con un método voraz puede declarar «insuficiente» algo que sí tiene solución. Por eso:
+
+- `domain/assessment/ruleSolver.ts` modela las reglas como un **problema de flujo máximo**: fuente → regla (capacidad = `count`) → pregunta candidata (capacidad 1) → sumidero. Las preguntas fijas se descuentan primero. Con `spread: "even"`, la regla se divide en subreglas por tema con cuotas, y el sobrante se reparte al azar.
+- **Al guardar** se comprueba la factibilidad y se informa por regla (*«Faltan 2 preguntas difíciles de Límites»*). No se puede programar una evaluación infactible.
+- **Al iniciar cada intento** se ejecuta el mismo algoritmo con las candidatas **barajadas con la semilla del intento**: da una selección aleatoria, válida y reproducible.
+- Las preguntas de bonificación (§7.3) se resuelven **después**, excluyendo las ya elegidas.
+- Tests: solapamientos, factibilidad límite (exactamente justo), `even` con temas desiguales, misma semilla → misma selección.
+
 ### 7.1 Ciclo de vida
 
 ```
@@ -910,7 +974,7 @@ team: z.object({
 
 | Formación | Cómo funciona |
 |---|---|
-| **Asignada** *(por defecto)* | La docente arma las parejas antes de abrir, por grupo: **Generar al azar** y luego ajustar arrastrando. Al iniciar, el estudiante ya sabe con quién presenta. |
+| *(Ver §1.1b A10.)* **Asignada** *(por defecto)* | La docente arma las parejas antes de abrir, por grupo: **Generar al azar** y luego ajustar arrastrando. Al iniciar, el estudiante ya sabe con quién presenta. |
 | **Libre** | Al pulsar *Iniciar*, el primer estudiante recibe un código de 4 dígitos en pantalla. Su compañero lo escribe en su propio dispositivo para unirse. El intento empieza cuando la pareja está completa. |
 
 En las dos formaciones:
@@ -1399,7 +1463,7 @@ Diseño de referencia en `ARQUITECTURA_V2.md` Fase 6 y `GAMIFICACION.md`.
 | # | Pregunta | Cuándo hay que decidirla |
 |---|---|---|
 | **P1** | **¿Copias de seguridad?** Hoy no se adoptaron (§1.2). Un `pg_dump` diario comprimido fuera del servidor son unas 20 líneas en el compose y un trabajo programado. | **Antes de la primera nota real en la v2** |
-| P2 | ¿Se configura el SMTP de la universidad? Si no, la vía por correo se deja fuera del código. | Etapa 1 |
+| ~~P2~~ | Correo: **Resend** (§1.1b A3). Falta un dominio remitente verificado en Resend. | Etapa 1 |
 | P3 | ¿El código de inscripción caduca solo (por ejemplo, a las 2 semanas de empezar el periodo)? | Etapa 2 |
 | P4 | ¿Un docente puede compartir un banco con otro docente, o cada biblioteca es estrictamente personal? | Etapa 2 (afecta a `ownsBank`) |
 | P5 | ¿Un estudiante puede estar en dos grupos del mismo curso? Este diseño asume que **no**. | Etapa 2 |

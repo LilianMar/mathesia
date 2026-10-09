@@ -170,6 +170,23 @@ Se corrigen en CV2 **en la PR de la etapa donde aparecen**. Aquí queda la propu
 
 ---
 
+### 2.8 Ajustes de flujos confirmados el 9/10 (CV2 §1.1b) — impacto en el plan
+
+| Ajuste | Impacto en tareas |
+|---|---|
+| A1 Docentes por invitación | E1.11: en vez de «admin crea docente», tabla `teacher_invites` (hash del token, `expires_at`, `used_at`, `used_by`, `created_by`), `POST /admin/teacher-invites` (A **R**), `POST /auth/register-teacher` (P, límite §4.6). La semilla del primer admin se mantiene. |
+| A2 Registro de estudiante | E1.6: añadir `national_id` (único, solo dígitos), confirmación doble sin pegar de cédula y código. |
+| A3 Recuperación | E1.10: vía principal = **código por correo con Resend** (`platform/mail.ts` con el SDK `resend`; código de 6 dígitos, 15 min, un solo uso, hash en `password_reset_tokens` con `via='email'`). Secundarias: cédula + código (`RESET_WITH_ID_ENABLED`, por defecto `true`) y código de la docente. `/features` dice cuáles están activas. **Bloqueo:** con el remitente de prueba `onboarding@resend.dev`, Resend solo entrega al correo dueño de la cuenta; para llegar a los estudiantes hace falta **verificar un dominio** en Resend. |
+| A4 Admin ve cursos, bancos y evaluaciones, no estudiantes ni notas | Nuevas políticas `adminCanViewCourse`, `adminCanViewBank`, `adminCanViewAssessment`. 🔒 Los contratos de salida para el admin **no tienen** campos de estudiantes ni notas (como `teacher_notes` para el estudiante). Matriz §6: admin → listas, intentos, monitor, resultados, libro, ficha → 404; cursos, bancos, evaluaciones → 200. |
+| A5 Docente crea sus cursos | E2.4: `POST /courses` (D). La materia y el periodo se eligen de un catálogo. *Pendiente: ¿quién crea materias y periodos?* |
+| A6 Solo el docente retira | Sin ruta de retiro para el estudiante (ya estaba así). |
+| A8 Corregir la respuesta correcta | E2.7/E3.8: al cambiar `answer` de una pregunta no paramétrica, el servicio actualiza `attempt_items.answer_key` de los intentos de evaluaciones *(alcance pendiente: abiertas/cerradas/publicadas)*, recalcula, escribe `grade_revisions` con motivo «Corrección de la clave» y `audit_log`. |
+| A9 Reglas | E3.4: `ruleSolver.ts` (flujo máximo, CV2 §7.0) + tabla temas × dificultad en el constructor. |
+| A10 Pareja con desplegable | E3b: sustituye el «acompañante vigilado» y el código de 4 dígitos. *Pendiente de confirmar quién elige al compañero (ver preguntas abiertas).* Al iniciar, la cuenta del compañero queda bloqueada para presentar (y para iniciar sesión, si se confirma) hasta que el intento termine. |
+| A12 Motor de examen de la v1 | E3.6/E3.7 pasan a ser **portado** de `quiz.js` y `attempt.service.js`, incluida la congelación por pantalla dividida, `screen_share_*`, la secuencia del latido (`secuencia_retrocedida`, `sesion_distinta`), la retroalimentación en vivo y la vista de resultados. E6.1 se adelanta a E3. |
+| A13 Reporte de notas | E5.1: vista del estudiante con desglose por evaluación (pregunta a pregunta cuando está publicada) y reporte del curso, exportable a PDF. |
+| A15 Ampliar tiempo | Todos los docentes del curso, en evaluaciones abiertas. *(Admin: pendiente, ver preguntas abiertas.)* |
+
 ## 3. Convenciones de trabajo
 
 ### 3.1 Estructura final del repositorio
@@ -935,4 +952,5 @@ curl -fsS http://127.0.0.1:9063/api/v1/health
 | Fecha | Tarea | Nota |
 |---|---|---|
 | 2026-10-09 | — | Plan creado tras revisar CV2 y la v1. Pendientes: D1, D2, D3, D4, P1. |
+| 2026-10-09 | Flujos | Confirmación de flujos con la docente → CV2 §1.1b (A1–A15) y §7.0 (reglas). Resend configurado en `.env` local (clave solo de envío). Preguntas abiertas en la sección 2.8. |
 | 2026-10-09 | D1, D2, D4 | D1 = prefijo `/mathesia/`. D2 = como la v1 (sin codificar; method override + detección de HTML). D4 = repo `LilianMar/mathesia`, push por SSH como `cghidalgos`. Riesgo de mismo origen añadido a CV2 §1.2. Siguen pendientes D3 y P1. |
