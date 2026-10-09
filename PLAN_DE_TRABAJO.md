@@ -156,7 +156,7 @@ Se corrigen en CV2 **en la PR de la etapa donde aparecen**. Aquí queda la propu
 |---|---|---|---|
 | ~~D1~~ | ✅ **Prefijo `/mathesia/`** en `lidis.usbcali.edu.co` (9/10). | — | — |
 | ~~D2~~ | ✅ **Como la v1**: sin codificar; method override + detección de HTML (9/10). | — | — |
-| **D3** | Quién crea temas (H8) | Docentes de la materia pueden crearlos. | E2 |
+| ~~D3~~ | ✅ Los temas son del banco (CV2 §1.1b A20). | — | — |
 | ~~D4~~ | ✅ **Repo propio** `git@github.com:LilianMar/mathesia.git` (9/10). Se sube por SSH con la cuenta `cghidalgos` (la misma que firma los commits de quiz_app). | — | — |
 | **P1** | Copias de seguridad (CV2 §13) | **Se implementan igual en E0** como servicio opcional del compose (20 líneas). Se puede apagar, pero no se puede improvisar el día que hagan falta. | Primera nota real |
 | P2 | SMTP de la universidad | Sin SMTP: la vía por correo queda oculta por `/features`. | — |
@@ -185,7 +185,14 @@ Se corrigen en CV2 **en la PR de la etapa donde aparecen**. Aquí queda la propu
 | A10 Pareja con desplegable | E3b: sustituye el «acompañante vigilado» y el código de 4 dígitos. *Pendiente de confirmar quién elige al compañero (ver preguntas abiertas).* Al iniciar, la cuenta del compañero queda bloqueada para presentar (y para iniciar sesión, si se confirma) hasta que el intento termine. |
 | A12 Motor de examen de la v1 | E3.6/E3.7 pasan a ser **portado** de `quiz.js` y `attempt.service.js`, incluida la congelación por pantalla dividida, `screen_share_*`, la secuencia del latido (`secuencia_retrocedida`, `sesion_distinta`), la retroalimentación en vivo y la vista de resultados. E6.1 se adelanta a E3. |
 | A13 Reporte de notas | E5.1: vista del estudiante con desglose por evaluación (pregunta a pregunta cuando está publicada) y reporte del curso, exportable a PDF. |
-| A15 Ampliar tiempo | Todos los docentes del curso, en evaluaciones abiertas. *(Admin: pendiente, ver preguntas abiertas.)* |
+| A15 Ampliar tiempo | Todos los docentes del curso (evaluación completa o un intento); el admin solo la evaluación completa. |
+| A16–A17 Pareja | E3b se rehace: `POST /assessments/:id/attempts` con `partnerId` opcional (debe estar matriculado en el curso, sin intento propio ni pareja en esa evaluación y, si es presencial, presente). Desplegable `GET /assessments/:id/partner-candidates` (E, solo nombres). Bloqueo de la cuenta del compañero: `platform/session.ts` consulta si el usuario es miembro no operador de un intento `in_progress` y, en ese caso, toda ruta salvo `GET /me`, `POST /auth/logout` y la pantalla de espera responde `ACCOUNT_IN_TEAM_ATTEMPT`. Se elimina: formación asignada, código de 4 dígitos, modo acompañante, `POST /attempts/:id/operator`. |
+| A18 Corrección de la clave | Abiertas y cerradas; publicadas no. |
+| A19 Materia y periodo | E2.4: `POST /courses` con `subjectName` y `termCode`; búsqueda o creación normalizada. El admin ya no tiene CRUD de materias ni periodos (solo los ve). |
+| A20 Temas del banco | Migración 0004: `topics.bank_id` en vez de `subject_id`; `UNIQUE (bank_id, name)`. La importación crea los temas que trae. D3 queda **resuelta** por esta decisión. Reglas y bonificación filtran por los temas de los bancos elegidos. `class_session_topics` elige de los temas de los bancos del docente. |
+| A21 Varios intentos | `settings.attemptGrading: "best" | "average"` y tabla `assessment_student_overrides (assessment_id, student_id, attempt_grading, extra_attempts?)`. `domain/grading/attemptPolicy.ts` con tests. |
+| A22 Grupos | Se mantiene el trigger «un grupo activo por curso». |
+| A23 Docentes y bancos | `ownsBank` sin restricción de materia; un docente usa sus bancos en cualquier curso que dicte (`teachesCourse`). Los auxiliares se mantienen. |
 
 ## 3. Convenciones de trabajo
 
@@ -936,7 +943,7 @@ curl -fsS http://127.0.0.1:9063/api/v1/health
 
 ## 10. Primeros pasos concretos (próxima sesión)
 
-1. Resolver **D3** (temas) antes de la Etapa 2; no bloquea la Etapa 0.
+1. Verificar el dominio `mathesiausb.co` en Resend (lo hace la docente; antes de E1.10).
 2. E0.1: `git init`, pnpm, workspaces, tsconfig, ESLint, Vitest.
 3. `scripts/check-subnet.sh` y probar `docker network create --subnet 10.210.0.0/24 mathesia-test` (y borrarla) para validar §2.3 antes de escribir el compose.
 4. E0.4 + E0.5: migración 0001 y la prueba de concepto de encolado transaccional.
@@ -952,5 +959,6 @@ curl -fsS http://127.0.0.1:9063/api/v1/health
 | Fecha | Tarea | Nota |
 |---|---|---|
 | 2026-10-09 | — | Plan creado tras revisar CV2 y la v1. Pendientes: D1, D2, D3, D4, P1. |
+| 2026-10-09 | Flujos (2) | A15–A23: parejas formadas por el estudiante con cuenta del compañero inactiva, temas del banco (cierra D3), intentos con mejor/promedio y excepción por estudiante, materia y periodo creados por el docente. |
 | 2026-10-09 | Flujos | Confirmación de flujos con la docente → CV2 §1.1b (A1–A15) y §7.0 (reglas). Resend configurado en `.env` local (clave solo de envío). Preguntas abiertas en la sección 2.8. |
 | 2026-10-09 | D1, D2, D4 | D1 = prefijo `/mathesia/`. D2 = como la v1 (sin codificar; method override + detección de HTML). D4 = repo `LilianMar/mathesia`, push por SSH como `cghidalgos`. Riesgo de mismo origen añadido a CV2 §1.2. Siguen pendientes D3 y P1. |

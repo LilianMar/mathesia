@@ -65,7 +65,15 @@ Donde una sección posterior diga otra cosa, manda esta tabla. Las secciones afe
 | A12 | **Presentación del examen** | Se porta **el motor de la v1** (`quiz_app/public/js/pages/quiz.js` y `attempt.service.js`), que ya funciona bien en producción: antitrampas (incluida la congelación por pantalla dividida y la pantalla compartida), vidas, latido con secuencia, retroalimentación y vista de resultados. |
 | A13 | **Reporte de notas del estudiante** | Además de su nota, el estudiante ve el **desglose** de cada evaluación y un **reporte de notas** del curso. |
 | A14 | **Bonificación** | Se configura al crear la evaluación (§7.3, sin cambios). |
-| A15 | **Ampliar tiempo** | Lo tienen **todos los docentes** sobre las evaluaciones que están en curso en sus cursos. |
+| A15 | **Ampliar tiempo** | Lo tienen **todos los docentes** del curso sobre sus evaluaciones en curso (toda la evaluación o un intento). El administrador **también** la conserva, solo sobre la evaluación completa (no ve estudiantes, A4). |
+| A16 | **Pareja: quién la forma** | **El estudiante** que inicia elige a su compañero en un desplegable con los estudiantes matriculados en el curso (cualquier grupo del curso). La docente no arma parejas. Desaparecen la formación «asignada» y el código de 4 dígitos de §7.4. |
+| A17 | **Pareja: cuenta del compañero** | Mientras dura el intento, la cuenta del compañero queda **inactiva para toda la plataforma**: cualquier pantalla muestra «Estás presentando *Quiz 3* en pareja con *Nombre*» y solo permite cerrar sesión. Se reactiva al entregar o vencer el intento. Sustituye al «acompañante vigilado» de §7.4. |
+| A18 | **Corrección de la clave: alcance** | Se aplica a evaluaciones **abiertas y cerradas** (recalcula y deja `grade_revisions`). En las **publicadas** no se aplica sola. |
+| A19 | **Materia y periodo** | Los escribe **el docente al crear el curso**. Se reutiliza la materia o el periodo si ya existe con el mismo nombre normalizado (sin tildes ni mayúsculas); si no, se crea. El periodo tiene formato `AAAA-N`. |
+| A20 | **Temas** | Los temas son **los del banco de preguntas**: pertenecen al banco (y por tanto al docente), se crean al escribir o importar preguntas, y no hay catálogo por materia. La bitácora de clase y la bonificación eligen entre los temas de los bancos del docente. Sustituye a «los temas son de la materia» (§6.3). |
+| A21 | **Varios intentos** | Nota configurable: **mejor nota** o **promedio**. Se fija en la evaluación para todo el grupo y se puede **cambiar para un estudiante concreto**. |
+| A22 | **Grupos** | Un estudiante está en **un solo grupo por curso** (confirmado). Puede estar en varios cursos. |
+| A23 | **Varios docentes y bancos** | Un curso puede tener **varios docentes**. Cada docente usa **sus** bancos en cualquier curso donde enseñe, sin importar la materia. |
 
 ### 1.2 No adoptadas (y su riesgo, para que quede escrito)
 
@@ -605,9 +613,9 @@ CREATE TABLE enrollments (
 ### 6.3 Temas, bancos y preguntas
 
 ```sql
-CREATE TABLE topics (
+CREATE TABLE topics (                     -- (ver §1.1b A20: pertenecen al banco)
   id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  subject_id  UUID NOT NULL REFERENCES subjects(id),
+  subject_id  UUID NOT NULL REFERENCES subjects(id),  -- A20: se reemplaza por bank_id
   name        TEXT NOT NULL,               -- 'Límites por racionalización'
   parent_id   UUID REFERENCES topics(id),  -- 'Límites' > 'Límites por racionalización'
   UNIQUE (subject_id, name)
