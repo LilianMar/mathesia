@@ -74,6 +74,7 @@ Donde una sección posterior diga otra cosa, manda esta tabla. Las secciones afe
 | A21 | **Varios intentos** | Nota configurable: **mejor nota** o **promedio**. Se fija en la evaluación para todo el grupo y se puede **cambiar para un estudiante concreto**. |
 | A22 | **Grupos** | Un estudiante está en **un solo grupo por curso** (confirmado). Puede estar en varios cursos. |
 | A23 | **Varios docentes y bancos** | Un curso puede tener **varios docentes**. Cada docente usa **sus** bancos en cualquier curso donde enseñe, sin importar la materia. |
+| A24 | **Pareja: confirmación en dos pasos** | El compañero tiene que **aceptar desde su propio dispositivo**, con su sesión iniciada. Al elegirlo, su pantalla muestra «*Nombre* quiere presentar *Quiz 3* contigo» con un **código de 6 dígitos** y un botón **Rechazar**. Quien inicia escribe ese código; si coincide, empieza el intento y la cuenta del compañero queda inactiva (A17). El código dura 2 minutos, admite 3 intentos fallidos (después la solicitud se cancela) y queda en la auditoría. Nadie puede inactivar la cuenta de otro sin que esté presente y con su sesión abierta. |
 
 ### 1.2 No adoptadas (y su riesgo, para que quede escrito)
 
